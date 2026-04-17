@@ -1,0 +1,263 @@
+
+<style>
+  .app { font-family: var(--font-sans); max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; }
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .logo { width: 36px; height: 36px; border-radius: 10px; background: #E1F5EE; display: flex; align-items: center; justify-content: center; }
+  .logo svg { width: 20px; height: 20px; }
+  .header-text h1 { font-size: 17px; font-weight: 500; margin: 0; color: var(--color-text-primary); }
+  .header-text p { font-size: 12px; color: var(--color-text-secondary); margin: 0; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; background: #E1F5EE; color: #0F6E56; margin-left: auto; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
+  .card-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
+  select, input[type="text"] { width: 100%; box-sizing: border-box; font-size: 13px; }
+  .patient-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rec-panel { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .rec-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+  .rec-btn { width: 48px; height: 48px; border-radius: 50%; border: none; background: #E24B4A; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; flex-shrink: 0; }
+  .rec-btn:hover { transform: scale(1.05); }
+  .rec-btn.recording { background: #F09595; animation: pulse 1.2s infinite; }
+  .rec-btn.idle { background: #1D9E75; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  .rec-meta { flex: 1; }
+  .rec-status { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .rec-time { font-size: 13px; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+  .waveform { display: flex; align-items: center; gap: 2px; height: 32px; }
+  .waveform span { width: 3px; border-radius: 2px; background: #1D9E75; transition: height 0.15s; }
+  .transcript-box { min-height: 140px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); padding: 12px; font-size: 13px; line-height: 1.7; color: var(--color-text-primary); position: relative; }
+  .transcript-placeholder { color: var(--color-text-tertiary); font-style: italic; }
+  .cursor { display: inline-block; width: 2px; height: 14px; background: #1D9E75; margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .ai-panel { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .ai-tabs { display: flex; gap: 4px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .ai-tab { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--color-border-tertiary); background: transparent; cursor: pointer; color: var(--color-text-secondary); }
+  .ai-tab.active { background: #E1F5EE; color: #0F6E56; border-color: #9FE1CB; }
+  .ai-content { display: none; font-size: 13px; line-height: 1.7; color: var(--color-text-primary); }
+  .ai-content.visible { display: block; }
+  .highlight { background: #E1F5EE; color: #085041; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin: 0 2px; }
+  .finding { display: flex; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .finding:last-child { border-bottom: none; }
+  .finding-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .dot-warn { background: #EF9F27; }
+  .dot-info { background: #1D9E75; }
+  .dot-flag { background: #E24B4A; }
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+  .metric-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+  .metric-lbl { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .action-btn { font-size: 12px; padding: 6px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; cursor: pointer; color: var(--color-text-primary); }
+  .action-btn:hover { background: var(--color-background-secondary); }
+  .action-btn.primary { background: #1D9E75; border-color: #1D9E75; color: white; }
+  .action-btn.primary:hover { background: #0F6E56; }
+</style>
+
+<div class="app">
+  <h2 class="sr-only">Speech and hearing clinic AI transcription interface</h2>
+
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 2a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" fill="#1D9E75"/>
+        <path d="M5 9a1 1 0 0 1 1 1 4 4 0 0 0 8 0 1 1 0 1 1 2 0 6 6 0 0 1-5 5.92V18h2a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h2v-3.08A6 6 0 0 1 4 10a1 1 0 0 1 1-1z" fill="#1D9E75"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>ClearVoice Transcriber</h1>
+      <p>Speech & Hearing Clinic — AI-assisted session documentation</p>
+    </div>
+    <span class="badge">Live</span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-label">Patient</div>
+      <div class="patient-row">
+        <input type="text" value="Margaret Liu" placeholder="Name" />
+        <input type="text" value="SH-2847" placeholder="ID" />
+      </div>
+      <div style="margin-top:8px;">
+        <select>
+          <option>Initial evaluation</option>
+          <option>Follow-up session</option>
+          <option>Hearing assessment</option>
+          <option>Speech therapy</option>
+          <option>Audiogram review</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">Clinician &amp; Settings</div>
+      <input type="text" value="Dr. Sarah Okonkwo, AuD" placeholder="Clinician name" style="margin-bottom:8px;" />
+      <select>
+        <option>English (US) — standard</option>
+        <option>English — pediatric mode</option>
+        <option>Spanish (US)</option>
+        <option>Mandarin</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="rec-panel">
+    <div class="rec-controls">
+      <button class="rec-btn idle" id="recBtn" onclick="toggleRecording()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <circle id="recIcon" cx="9" cy="9" r="6" fill="white"/>
+        </svg>
+      </button>
+      <div class="rec-meta">
+        <div class="rec-status" id="recStatus">Ready to record</div>
+        <div class="rec-time" id="recTime">00:00</div>
+      </div>
+      <div class="waveform" id="waveform">
+        <span style="height:6px" id="b0"></span><span style="height:10px" id="b1"></span><span style="height:16px" id="b2"></span><span style="height:8px" id="b3"></span><span style="height:20px" id="b4"></span><span style="height:12px" id="b5"></span><span style="height:6px" id="b6"></span><span style="height:18px" id="b7"></span><span style="height:10px" id="b8"></span><span style="height:14px" id="b9"></span><span style="height:8px" id="b10"></span><span style="height:22px" id="b11"></span><span style="height:6px" id="b12"></span><span style="height:16px" id="b13"></span><span style="height:10px" id="b14"></span>
+      </div>
+    </div>
+
+    <div class="card-label" style="margin-bottom:6px;">Live transcript</div>
+    <div class="transcript-box" id="transcriptBox">
+      <span class="transcript-placeholder" id="tPlaceholder">Press record to begin capturing the session…</span>
+      <span id="tText" style="display:none;"></span><span class="cursor" id="tCursor" style="display:none;"></span>
+    </div>
+  </div>
+
+  <div class="ai-panel">
+    <div class="card-label" style="margin-bottom:10px;">AI analysis</div>
+    <div class="ai-tabs">
+      <button class="ai-tab active" onclick="switchTab('summary',this)">Summary</button>
+      <button class="ai-tab" onclick="switchTab('findings',this)">Clinical findings</button>
+      <button class="ai-tab" onclick="switchTab('icd',this)">ICD codes</button>
+      <button class="ai-tab" onclick="switchTab('plan',this)">Care plan</button>
+    </div>
+
+    <div class="ai-content visible" id="tab-summary">
+      Patient presents with bilateral high-frequency hearing loss, consistent with prior audiogram. Patient reports difficulty following conversations in noisy environments and has noticed increased reliance on lip reading. No tinnitus reported in this session. Patient is receptive to hearing aid trial and expressed interest in assistive listening devices for home use.
+    </div>
+
+    <div class="ai-content" id="tab-findings">
+      <div class="finding">
+        <div class="finding-dot dot-flag"></div>
+        <div><strong style="font-weight:500">Bilateral SNHL</strong> — High-frequency loss 4–8 kHz, confirmed by pure-tone average. Flagged for audiogram update referral.</div>
+      </div>
+      <div class="finding">
+        <div class="finding-dot dot-warn"></div>
+        <div><strong style="font-weight:500">Speech discrimination</strong> — Patient scores 68% in quiet; degrades in noise. Recommend word recognition testing in +5 dB SNR.</div>
+      </div>
+      <div class="finding">
+        <div class="finding-dot dot-info"></div>
+        <div><strong style="font-weight:500">Communication strategies</strong> — Patient self-reports use of visual cues. Consistent with previously documented compensatory strategies.</div>
+      </div>
+      <div class="finding">
+        <div class="finding-dot dot-info"></div>
+        <div><strong style="font-weight:500">Motivation</strong> — High readiness for hearing aid trial noted. Patient mentioned workplace difficulties as primary motivation.</div>
+      </div>
+    </div>
+
+    <div class="ai-content" id="tab-icd">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;">
+        <span class="highlight">H90.3</span><span>Sensorineural hearing loss, bilateral</span>
+        <span class="highlight">H90.5</span><span>Unspecified sensorineural hearing loss</span>
+        <span class="highlight">Z96.21</span><span>Cochlear implant status</span>
+        <span class="highlight">F80.0</span><span>Phonological disorder (secondary consideration)</span>
+        <span class="highlight">Z82.2</span><span>Family history of deafness/hearing loss</span>
+      </div>
+      <p style="font-size:12px;color:var(--color-text-secondary);margin-top:10px;">Suggested codes based on session content. Clinician review required before billing.</p>
+    </div>
+
+    <div class="ai-content" id="tab-plan">
+      <ol style="padding-left:1.1rem;font-size:13px;line-height:2;margin:0;">
+        <li>Schedule audiogram follow-up within 30 days</li>
+        <li>Initiate bilateral RIC hearing aid trial (60-day period)</li>
+        <li>Provide ALDs resource packet — TV streamer and phone clip</li>
+        <li>Refer to auditory rehabilitation group program</li>
+        <li>Follow-up appointment in 6 weeks to assess trial progress</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">94%</div><div class="metric-lbl">Transcription confidence</div></div>
+    <div class="metric"><div class="metric-val">12:40</div><div class="metric-lbl">Session duration</div></div>
+    <div class="metric"><div class="metric-val">4</div><div class="metric-lbl">Clinical flags</div></div>
+  </div>
+
+  <div class="action-row">
+    <button class="action-btn primary" onclick="sendPrompt('Build me the full AI transcriber app with Anthropic API integration — React with recording, live transcription using Whisper-style chunking, and auto-generated SOAP notes')">Build this app ↗</button>
+    <button class="action-btn" onclick="sendPrompt('How would I integrate a real speech-to-text API like Deepgram or Whisper into this transcriber?')">Integrate STT API ↗</button>
+    <button class="action-btn">Export to EHR</button>
+    <button class="action-btn">Print report</button>
+    <button class="action-btn">Save session</button>
+  </div>
+</div>
+
+<script>
+let recording = false, timer = null, seconds = 0, waveTimer = null, typeTimer = null;
+
+const sampleText = "Good morning Margaret, I've reviewed your audiogram from last March. Today we'll discuss what you've been noticing day-to-day. Can you tell me more about the situations where you find it hardest to follow conversations? ...Yes, busy restaurants are very typical for this pattern of hearing loss. The high-frequency drop we're seeing really affects consonant clarity — sounds like S, F, and TH. What you're describing with the TV volume is also consistent. Have you tried any hearing aids in the past?";
+
+let charIdx = 0;
+
+function toggleRecording() {
+  recording = !recording;
+  const btn = document.getElementById('recBtn');
+  const status = document.getElementById('recStatus');
+  const timeEl = document.getElementById('recTime');
+  const placeholder = document.getElementById('tPlaceholder');
+  const tText = document.getElementById('tText');
+  const tCursor = document.getElementById('tCursor');
+
+  if (recording) {
+    btn.className = 'rec-btn recording';
+    status.textContent = 'Recording…';
+    placeholder.style.display = 'none';
+    tText.style.display = 'inline';
+    tCursor.style.display = 'inline';
+    charIdx = 0; tText.textContent = '';
+    timer = setInterval(() => {
+      seconds++;
+      const m = String(Math.floor(seconds/60)).padStart(2,'0');
+      const s = String(seconds%60).padStart(2,'0');
+      timeEl.textContent = m+':'+s;
+    }, 1000);
+    waveTimer = setInterval(animateWave, 120);
+    typeTimer = setInterval(typeChar, 45);
+  } else {
+    btn.className = 'rec-btn idle';
+    status.textContent = 'Session paused';
+    clearInterval(timer); clearInterval(waveTimer); clearInterval(typeTimer);
+    resetWave();
+  }
+}
+
+function typeChar() {
+  if (charIdx < sampleText.length) {
+    document.getElementById('tText').textContent += sampleText[charIdx];
+    charIdx++;
+    const box = document.getElementById('transcriptBox');
+    box.scrollTop = box.scrollHeight;
+  } else {
+    clearInterval(typeTimer);
+  }
+}
+
+function animateWave() {
+  for (let i = 0; i < 15; i++) {
+    const h = Math.floor(Math.random() * 22) + 4;
+    document.getElementById('b'+i).style.height = h+'px';
+  }
+}
+
+function resetWave() {
+  const heights = [6,10,16,8,20,12,6,18,10,14,8,22,6,16,10];
+  for (let i = 0; i < 15; i++) {
+    document.getElementById('b'+i).style.height = heights[i]+'px';
+  }
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.ai-content').forEach(d => d.classList.remove('visible'));
+  document.querySelectorAll('.ai-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('visible');
+  el.classList.add('active');
+}
+</script>
